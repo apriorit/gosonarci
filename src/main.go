@@ -8,10 +8,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
-type TaskInfo struct {
+type taskInfo struct {
 	Organization       string `json:"organization"`
 	ID                 string `json:"id"`
 	TaskType           string `json:"taskType"`
@@ -30,24 +31,24 @@ type TaskInfo struct {
 	HasScannerContext  bool   `json:"hasScannerContext"`
 }
 
-type TaskStatusResponse struct {
-	Tasks []TaskInfo `json:"tasks"`
+type taskStatusResponse struct {
+	Tasks []taskInfo `json:"tasks"`
 }
 
-type ProjectStatusInfo struct {
+type projectStatusInfo struct {
 	Status string `json:"status"`
 }
 
-type ErrorInfo struct {
+type errorInfo struct {
 	Message string `json:"msg"`
 }
 
-type ErrorResponse struct {
-	Errors []ErrorInfo `json:"errors"`
+type errorResponse struct {
+	Errors []errorInfo `json:"errors"`
 }
 
-type ProjectStatusResponse struct {
-	ProjectStatus ProjectStatusInfo `json:"projectStatus"`
+type projectStatusResponse struct {
+	ProjectStatus projectStatusInfo `json:"projectStatus"`
 }
 
 func sonarAPIRequest(
@@ -56,7 +57,12 @@ func sonarAPIRequest(
 
 	var responseData []byte
 	client := &http.Client{}
-	url := sonarHostURL + apiMethod
+	var url string
+	if strings.HasSuffix(sonarHostURL, "/") {
+		url = sonarHostURL + apiMethod
+	} else {
+		url = sonarHostURL + "/" + apiMethod
+	}
 	componentRequest, err := http.NewRequest(
 		httpMethod,
 		url,
@@ -76,9 +82,9 @@ func sonarAPIRequest(
 	return responseData, err
 }
 
-func apiQualityGatesProjectStatus(sonarHostURL string, projectKey string, token string) (ProjectStatusResponse, error) {
-	var response ProjectStatusResponse
-	var errorsResponse ErrorResponse
+func apiQualityGatesProjectStatus(sonarHostURL string, projectKey string, token string) (projectStatusResponse, error) {
+	var response projectStatusResponse
+	var errorsResponse errorResponse
 
 	body, err := sonarAPIRequest(
 		sonarHostURL,
@@ -105,9 +111,9 @@ func apiQualityGatesProjectStatus(sonarHostURL string, projectKey string, token 
 }
 
 func apiCeActivityStatus(
-	sonarHostURL string, projectKey string, token string) (TaskStatusResponse, error) {
+	sonarHostURL string, projectKey string, token string) (taskStatusResponse, error) {
 
-	var response TaskStatusResponse
+	var response taskStatusResponse
 
 	body, err := sonarAPIRequest(
 		sonarHostURL,
